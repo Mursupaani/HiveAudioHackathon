@@ -1,3 +1,7 @@
+app
+*.lock
+cache
+
 # Prerequisites
 *.d
 
