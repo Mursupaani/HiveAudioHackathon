@@ -12,8 +12,8 @@ class CTransform {
 		Vec2  velocity = {0, 0};
 		float angle = 0;
 
-		CTransform(const Vec2 &p, const Vec2 &v, const float angle)
-			: pos(p), velocity(v), angle(angle) {};
+		CTransform(const Vec2 &p, const Vec2 &v, const float a)
+			: pos(p), velocity(v), angle(a) {};
 };
 
 class CShape {
@@ -45,7 +45,7 @@ class CLifespan {
 	public:
 		int remaining = 0;
 		int total = 0;
-		CLifespan(const int total) : remaining(total), total(total) {};
+		CLifespan(const int t) : remaining(t), total(t) {};
 };
 
 class CInput {
