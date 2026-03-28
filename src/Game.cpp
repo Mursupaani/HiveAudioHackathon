@@ -149,7 +149,6 @@ void Game::sMovement(void) {
 			bounceObjectFromWalls(e);
 		}
 	}
-	std::cout << m_player->cTransform->velocity << std::endl;
 }
 
 void Game::sUserInput(void) {
@@ -244,7 +243,7 @@ void Game::sRender(void) {
 
 	// TODO: calculate x correctly from windowSize
 	for (size_t i = 0; i < SAMPLES / 2; i++) {
-	    float x = i * 2.f;
+		float x = i * 2.f;
 		float y = windowSize.y - std::abs(freqs[i] * 100.f);
 
 		plot[i].position = sf::Vector2f(x, y);
