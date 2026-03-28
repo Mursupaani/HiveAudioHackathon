@@ -7,9 +7,11 @@
 #include <fstream>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "EntityManager.hpp"
+#include "LiveAudio.hpp"
 #include "Vec2.hpp"
 
 struct PlayerConfig {
@@ -41,6 +43,9 @@ class Game {
 		size_t			 m_lastEnemySpawnTime = 0;
 		bool			 m_paused = false;
 		bool			 m_running = true;
+		LiveAudio		 m_liveAudio;
+		unsigned int	 m_currentAudioSourceIndex = 0;
+		std::string		 m_currentAudioSourceName;
 
 		std::shared_ptr<Entity> m_player;
 
@@ -60,6 +65,9 @@ class Game {
 		void spawnSmallEnemies(std::shared_ptr<Entity> &entity);
 		void spawnBullet(std::shared_ptr<Entity> &entity, const Vec2 &mousePos);
 		void spawnSpecialWeapon(std::shared_ptr<Entity> &entity);
+
+		void chooseAudioSource(void);
+		void gameLoop(void);
 
 		void reset(void);
 
