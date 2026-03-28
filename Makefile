@@ -5,9 +5,9 @@ NAME			:= app
 CXX				:= c++
 
 # Compiler flags
-CXXFLAGS		:= -Wall -Wextra -Werror -Wshadow -std=c++20
+CXXFLAGS		:= -Wshadow -std=c++20
 CXXFLAGS		+= -O2
-SFMLFLAGS		:= -lsfml-graphics -lsfml-window -lsfml-system
+SFMLFLAGS		:= -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system
 DEBUG_FLAGS		:= -g3 -fsanitize=address -fsanitize=undefined -O0
 
 # Directory structure
