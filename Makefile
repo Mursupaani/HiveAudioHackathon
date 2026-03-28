@@ -46,6 +46,7 @@ SRCS_MAIN	:= \
 	Vec2.cpp \
 	Entity.cpp \
 	EntityManager.cpp \
+	FastFourierTransform.cpp \
 
 # Combine all source files
 SRCS		:= \
@@ -91,7 +92,7 @@ endef
 # ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ BUILD TARGETS ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ #
 
 # Default target
-all: _reset_progress $(NAME) 
+all: _reset_progress $(NAME)
 	@if [ ! -f $(OBJ_DIR)/.built ]; then \
 		echo ">$(BOLD)$(YELLOW) $(NAME) is already up to date.$(RESET)"; \
 	else \
@@ -103,7 +104,7 @@ all: _reset_progress $(NAME)
 $(NAME): $(OBJS)
 	@printf "\n"
 	@echo ">$(BOLD)$(GREEN) Linking $(NAME)...$(RESET)"
-	@$(CXX) $(CXXFLAGS) $(SFMLFLAGS) -o $(NAME) $(OBJS)
+	@$(CXX) $(CXXFLAGS) -o $(NAME) $(OBJS) $(SFMLFLAGS)
 	@touch $(OBJ_DIR)/.built
 	@echo ">$(BOLD)$(GREEN) $(NAME) successfully linked!$(RESET)"
 
@@ -172,5 +173,13 @@ re:
 	@$(MAKE) fclean
 	@$(MAKE) all
 
+linuxbrew: INC += -I/home/linuxbrew/.linuxbrew/include
+linuxbrew: SFMLFLAGS += -L/home/linuxbrew/.linuxbrew/lib -Wl,-rpath,/home/linuxbrew/.linuxbrew/lib
+linuxbrew: all
+
+brewdebug: INC += -I/home/linuxbrew/.linuxbrew/include
+brewdebug: SFMLFLAGS += -L/home/linuxbrew/.linuxbrew/lib -Wl,-rpath,/home/linuxbrew/.linuxbrew/lib
+brewdebug: debug
+
 # ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ TARGET DECLARATIONS ■■■■■■■■■■■■■■■■■■■■■■■■■ #
-.PHONY: all debug clean fclean re
+.PHONY: all debug clean fclean re linuxbrew

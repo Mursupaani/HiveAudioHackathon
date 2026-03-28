@@ -238,6 +238,19 @@ void Game::sRender(void) {
 	// Renders audio source name
 	m_window.draw(*m_text);
 
+	auto freqs = m_liveAudio.getFreqs();
+
+	sf::VertexArray plot(sf::PrimitiveType::LineStrip, SAMPLES);
+
+	// TODO: calculate x correctly from windowSize
+	for (size_t i = 0; i < SAMPLES / 2; i++) {
+	    float x = i * 2.f;
+		float y = windowSize.y - std::abs(freqs[i] * 100.f);
+
+		plot[i].position = sf::Vector2f(x, y);
+		plot[i].color = sf::Color::Cyan;
+	}
+
 	for (auto &e : m_entities.getEntities()) {
 		e->cShape->circle.setPosition(
 			sf::Vector2f(e->cTransform->pos.x, e->cTransform->pos.y));
@@ -245,6 +258,7 @@ void Game::sRender(void) {
 		sf::Angle angle = sf::degrees(e->cTransform->angle);
 		e->cShape->circle.setRotation(angle);
 		m_window.draw(e->cShape->circle);
+		m_window.draw(plot);
 	}
 
 	// Displays buffer
