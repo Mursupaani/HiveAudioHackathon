@@ -22,13 +22,13 @@ class LiveAudio : public sf::SoundStream {
 					return (true);
 				}
 		};
-		LiveRecorder			  m_recorder;
 		std::mutex				  m_mutex;
 		std::vector<std::int16_t> m_pendingSamples;
 		std::vector<std::int16_t> m_playingSamples;
 
 	public:
-		LiveAudio() : m_recorder(*this) {}
+		LiveRecorder recorder;
+		LiveAudio() : recorder(*this) {}
 
 		bool startStream(unsigned int sampleRate = 44100) {
 			if (!sf::SoundRecorder::isAvailable()) {
@@ -36,15 +36,17 @@ class LiveAudio : public sf::SoundStream {
 						  << std::endl;
 				return (false);
 			}
-			auto devices = m_recorder.getAvailableDevices();
-			for (auto &e : devices) {
-				std::cout << e << std::endl;
+			if (recorder.getDevice() == "") {
+				auto devices = recorder.getAvailableDevices();
+				for (auto &e : devices) {
+					std::cout << e << std::endl;
+				}
+				if (!recorder.setDevice(devices[0])) {
+					std::cerr << "Error: Failed to set device" << std::endl;
+					return (false);
+				}
 			}
-			if (!m_recorder.setDevice(devices[0])) {
-				std::cerr << "Error: Failed to set device" << std::endl;
-				return (false);
-			}
-			if (!m_recorder.start(sampleRate)) {
+			if (!recorder.start(sampleRate)) {
 				std::cerr << "Error: Failed to start the recorder" << std::endl;
 				return (false);
 			}
@@ -53,7 +55,7 @@ class LiveAudio : public sf::SoundStream {
 			return (true);
 		}
 		void stopStream() {
-			m_recorder.stop();
+			recorder.stop();
 			stop();
 		}
 		void receiveAudio(const std::int16_t *samples,

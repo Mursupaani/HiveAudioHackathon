@@ -51,14 +51,14 @@ void LiveAudioTest(void) {
 }
 
 int main(void) {
-	LiveAudioTest();
+	// LiveAudioTest();
 	// test();
 	// sf::Music test("test.wav");
 	// test.play();
 	// test.setVolume(50);
 	// while (true) {}
-	// Game game("config.txt");
-	// game.run();
+	Game game("config.txt");
+	game.run();
 }
 
 // NOTE: Run game like this!
