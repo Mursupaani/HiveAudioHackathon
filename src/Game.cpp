@@ -14,6 +14,7 @@
 #include <memory>
 
 #include "Components.hpp"
+#include "Entity.hpp"
 #include "EntityManager.hpp"
 #include "Vec2.hpp"
 
@@ -104,6 +105,8 @@ void Game::init(const std::string &path) {
 	m_window.create(sf::VideoMode(windowSize), "Geometry Wars",
 					sf::Style::Default, m_windowState);
 	m_window.setFramerateLimit(m_framerateLimit);
+	windowSize.x = m_window.getSize().x;
+	windowSize.y = m_window.getSize().y;
 
 	spawnPlayer();
 }
@@ -121,18 +124,30 @@ void Game::reset(void) {
 
 void Game::sMovement(void) {
 	// FIXME: Move to handle player movement
-	m_player->cTransform->velocity = {0, 0};
+	// m_player->cTransform->velocity = {0, 0};
 	if (m_player->cInput->up)
-		m_player->cTransform->velocity.y = -5;
+		m_player->cTransform->velocity.y += -1;
 	if (m_player->cInput->down)
-		m_player->cTransform->velocity.y = 5;
+		m_player->cTransform->velocity.y += 1;
 	if (m_player->cInput->left)
-		m_player->cTransform->velocity.x = -5;
+		m_player->cTransform->velocity.x += -1;
 	if (m_player->cInput->right)
-		m_player->cTransform->velocity.x = 5;
+		m_player->cTransform->velocity.x += 1;
+	// m_player->cTransform->velocity += m_gravity;
 	for (auto &e : m_entities.getEntities()) {
-		if (e->cTransform)
+		if (e->cTransform) {
+			e->cTransform->prevPos = e->cTransform->pos;
 			e->cTransform->pos += e->cTransform->velocity;
+			if (e->cTransform->velocity.y < -10)
+				e->cTransform->velocity.y = -10;
+			if (e->cTransform->velocity.y > 10)
+				e->cTransform->velocity.y = 10;
+			if (e->cTransform->velocity.x < -10)
+				e->cTransform->velocity.x = -10;
+			if (e->cTransform->velocity.x > 10)
+				e->cTransform->velocity.x = 10;
+			bounceObjectFromWalls(e);
+		}
 	}
 }
 
@@ -302,22 +317,28 @@ void Game::spawnSpecialWeapon(std::shared_ptr<Entity> &entity) {
 	(void)entity;
 }
 
-void Game::bounceObjectsFromWalls(void) {
-	// unsigned int screenWidth = windowSize.x;
-	// unsigned int screenHeight = windowSize.y;
+void Game::bounceObjectFromWalls(EntityPtr e) {
+	unsigned int screenWidth = windowSize.x;
+	unsigned int screenHeight = windowSize.y;
 
-	// for (auto &object : _objects) {
-	// 	float xSize = object.getShape().getLocalBounds().size.x / 2.0f;
-	// 	float ySize = object.getShape().getLocalBounds().size.y / 2.0f;
-	// 	if (object.getPosition().x - xSize <= 0)
-	// 		object.setHSpeed(object.getHSpeed() * -1);
-	// 	if (object.getPosition().y - ySize <= 0)
-	// 		object.setVSpeed(object.getVSpeed() * -1);
-	// 	if (object.getPosition().x + xSize >= screenWidth)
-	// 		object.setHSpeed(object.getHSpeed() * -1);
-	// 	if (object.getPosition().y + ySize >= screenHeight)
-	// 		object.setVSpeed(object.getVSpeed() * -1);
-	// }
+	float xSize = e->cShape->circle.getLocalBounds().size.x / 2.0f;
+	float ySize = e->cShape->circle.getLocalBounds().size.y / 2.0f;
+	if (e->cTransform->pos.x - xSize <= 0) {
+		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->velocity.x *= -0.5;
+	}
+	if (e->cTransform->pos.y - ySize <= 0) {
+		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->velocity.y *= -0.5;
+	}
+	if (e->cTransform->pos.x + xSize >= screenWidth) {
+		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->velocity.x *= -0.5;
+	}
+	if (e->cTransform->pos.y + ySize >= screenHeight) {
+		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->velocity.y *= -0.5;
+	}
 }
 
 // void Game::init(const std::string &configFilePath) {
