@@ -46,6 +46,7 @@ SRCS_MAIN	:= \
 	Vec2.cpp \
 	Entity.cpp \
 	EntityManager.cpp \
+	FastFourierTransform.cpp \
 
 # Combine all source files
 SRCS		:= \
@@ -175,6 +176,10 @@ re:
 linuxbrew: INC += -I/home/linuxbrew/.linuxbrew/include
 linuxbrew: SFMLFLAGS += -L/home/linuxbrew/.linuxbrew/lib -Wl,-rpath,/home/linuxbrew/.linuxbrew/lib
 linuxbrew: all
+
+brewdebug: INC += -I/home/linuxbrew/.linuxbrew/include
+brewdebug: SFMLFLAGS += -L/home/linuxbrew/.linuxbrew/lib -Wl,-rpath,/home/linuxbrew/.linuxbrew/lib
+brewdebug: debug
 
 # ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ TARGET DECLARATIONS ■■■■■■■■■■■■■■■■■■■■■■■■■ #
 .PHONY: all debug clean fclean re linuxbrew
