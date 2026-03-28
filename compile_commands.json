@@ -3,9 +3,6 @@
   "directory": "/Users/Antti/Projects/Hive/HiveAudioHackathon",
   "arguments": [
    "c++",
-   "-Wall",
-   "-Wextra",
-   "-Werror",
    "-Wshadow",
    "-std=c++20",
    "-O2",
@@ -27,9 +24,6 @@
   "directory": "/Users/Antti/Projects/Hive/HiveAudioHackathon",
   "arguments": [
    "c++",
-   "-Wall",
-   "-Wextra",
-   "-Werror",
    "-Wshadow",
    "-std=c++20",
    "-O2",
@@ -51,9 +45,6 @@
   "directory": "/Users/Antti/Projects/Hive/HiveAudioHackathon",
   "arguments": [
    "c++",
-   "-Wall",
-   "-Wextra",
-   "-Werror",
    "-Wshadow",
    "-std=c++20",
    "-O2",
@@ -75,9 +66,6 @@
   "directory": "/Users/Antti/Projects/Hive/HiveAudioHackathon",
   "arguments": [
    "c++",
-   "-Wall",
-   "-Wextra",
-   "-Werror",
    "-Wshadow",
    "-std=c++20",
    "-O2",
@@ -99,9 +87,6 @@
   "directory": "/Users/Antti/Projects/Hive/HiveAudioHackathon",
   "arguments": [
    "c++",
-   "-Wall",
-   "-Wextra",
-   "-Werror",
    "-Wshadow",
    "-std=c++20",
    "-O2",

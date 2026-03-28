@@ -2,6 +2,7 @@
 #include <exception>
 
 #include "Game.hpp"
+#include "LiveAudio.hpp"
 #include "Recorder.hpp"
 #include "Vec2.hpp"
 
@@ -34,8 +35,24 @@ void test(void) {
 	}
 }
 
+void LiveAudioTest(void) {
+	LiveAudio liveAudio;
+	std::cout << "Starting live microphone playback... (Watch out for audio "
+				 "feedback/echo!)"
+			  << std::endl;
+	if (!liveAudio.startStream()) {
+		return;
+	}
+
+	std::cout << "Press Enter to stop." << std::endl;
+	std::cin.get();
+
+	liveAudio.stopStream();
+}
+
 int main(void) {
-	test();
+	LiveAudioTest();
+	// test();
 	// sf::Music test("test.wav");
 	// test.play();
 	// test.setVolume(50);

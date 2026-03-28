@@ -6,36 +6,78 @@
 #include <mutex>
 #include <vector>
 
-// class LiveAudio : public sf::SoundStream {
-// 	private:
-// 		class LiveRecorder : public sf::SoundRecorder {
-// 			private:
-// 				LiveAudio &m_stream;
-//
-// 			public:
-// 				LiveRecorder(LiveAudio &stream) : m_stream(stream) {}
-//
-// 			protected:
-// 				bool onProcessSamples(const std::int16_t *samples,
-// 									  std::size_t sampleCount) override {
-// 					m_stream.receiveAudio(samples, sampleCount);
-// 					return (true);
-// 				}
-// 		};
-// 		LiveRecorder m_recorder;
-// 		std::mutex	 m_mutex;
-//
-// 	public:
-// 		LiveAudio() : m_recorder(*this) {}
-//
-// 		bool startStream(unsigned int sampleRate = 44100) {
-// 			if (!sf::SoundRecorder::isAvailable()) {
-// 				std::cerr << "Error: No audio capture device available"
-// 						  << std::endl;
-// 			}
-// 			if (!m_recorder.start(sampleRate))
-// 				std::cerr << "Error: Failed to start the recorder" << std::endl;
-// 		initialize(unsigned int channelCount, unsigned int sampleRate, const
-// std::vector<SoundChannel> &channelMap)
-// 		}
-// };
+class LiveAudio : public sf::SoundStream {
+	private:
+		class LiveRecorder : public sf::SoundRecorder {
+			private:
+				LiveAudio &m_stream;
+
+			public:
+				LiveRecorder(LiveAudio &stream) : m_stream(stream) {}
+
+			protected:
+				bool onProcessSamples(const std::int16_t *samples,
+									  std::size_t sampleCount) override {
+					m_stream.receiveAudio(samples, sampleCount);
+					return (true);
+				}
+		};
+		LiveRecorder			  m_recorder;
+		std::mutex				  m_mutex;
+		std::vector<std::int16_t> m_pendingSamples;
+		std::vector<std::int16_t> m_playingSamples;
+
+	public:
+		LiveAudio() : m_recorder(*this) {}
+
+		bool startStream(unsigned int sampleRate = 44100) {
+			if (!sf::SoundRecorder::isAvailable()) {
+				std::cerr << "Error: No audio capture device available"
+						  << std::endl;
+				return (false);
+			}
+			auto devices = m_recorder.getAvailableDevices();
+			for (auto &e : devices) {
+				std::cout << e << std::endl;
+			}
+			if (!m_recorder.setDevice(devices[0])) {
+				std::cerr << "Error: Failed to set device" << std::endl;
+				return (false);
+			}
+			if (!m_recorder.start(sampleRate)) {
+				std::cerr << "Error: Failed to start the recorder" << std::endl;
+				return (false);
+			}
+			initialize(1, sampleRate, {sf::SoundChannel::Mono});
+			play();
+			return (true);
+		}
+		void stopStream() {
+			m_recorder.stop();
+			stop();
+		}
+		void receiveAudio(const std::int16_t *samples,
+						  std::size_t		  sampleCount) {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_pendingSamples.insert(m_pendingSamples.end(), samples,
+									samples + sampleCount);
+			if (m_pendingSamples.size() > 22050) {
+				m_pendingSamples.erase(m_pendingSamples.begin(),
+									   m_pendingSamples.end() - 22050);
+			}
+		}
+
+		bool onGetData(Chunk &data) override {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			if (m_pendingSamples.empty()) {
+				m_playingSamples.assign(441, 0);
+			} else {
+				m_playingSamples.swap(m_pendingSamples);
+				m_pendingSamples.clear();
+			}
+			data.samples = m_playingSamples.data();
+			data.sampleCount = m_playingSamples.size();
+			return (true);
+		}
+		void onSeek(sf::Time timeOffset) override {}
+};
