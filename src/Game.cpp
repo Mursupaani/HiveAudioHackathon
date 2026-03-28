@@ -21,6 +21,18 @@
 
 Game::Game(const std::string &config) {
 	init(config);
+
+	if (!m_font.openFromFile("Fonts/JetBrainsMono-Regular.ttf"))
+		std::cerr << "Font not found" << std::endl;
+	m_text = new sf::Text(m_font);
+	m_text->setCharacterSize(18);
+
+	auto audioSources = m_liveAudio.recorder.getAvailableDevices();
+	if (!m_liveAudio.recorder.setDevice(audioSources[1])) {
+		std::cerr << "Couldn't set audio int source" << std::endl;
+		exit(1);
+	}
+	m_text->setString(audioSources[0]);
 }
 
 Game::~Game(void) {
@@ -29,18 +41,45 @@ Game::~Game(void) {
 }
 
 void Game::run(void) {
+	// chooseAudioSource();
+	if (!m_liveAudio.startStream()) {
+		return;
+	}
+	gameLoop();
+}
+
+void Game::chooseAudioSource(void) {
+	auto audioSources = m_liveAudio.recorder.getAvailableDevices();
+	++m_currentAudioSourceIndex;
+	if (m_currentAudioSourceIndex >= audioSources.size())
+		m_currentAudioSourceIndex = 0;
+	m_liveAudio.stopStream();
+	if (!m_liveAudio.recorder.setDevice(
+			audioSources[m_currentAudioSourceIndex])) {
+		std::cerr << "Couldn't change audio source" << std::endl;
+		exit(1);
+	}
+	m_currentAudioSourceName = audioSources[m_currentAudioSourceIndex];
+	m_text->setString(m_currentAudioSourceName);
+	m_liveAudio.startStream();
+}
+
+void Game::gameLoop(void) {
 	// TODO: add pause functionality
 	// Some systems should function while paused (rendering)
 	// Some systems shouldn't (movement / input)
+
 	while (m_running) {
 		m_entities.update();
+
+		sUserInput();
 
 		if (!m_paused) {
 			sEnemySpawner();
 			sMovement();
 			sCollision();
-			sUserInput();
 		}
+
 		sRender();
 
 		// NOTE: increment the current frame
@@ -123,6 +162,9 @@ void Game::sUserInput(void) {
 				case sf::Keyboard::Key::R:
 					reset();
 					break;
+				case sf::Keyboard::Key::M:
+					chooseAudioSource();
+					break;
 				default:
 					break;
 			}
@@ -166,6 +208,9 @@ void Game::sLifeSpan(void) {
 void Game::sRender(void) {
 	m_window.clear();
 
+	// Renders audio source name
+	m_window.draw(*m_text);
+
 	for (auto &e : m_entities.getEntities()) {
 		e->cShape->circle.setPosition(
 			sf::Vector2f(e->cTransform->pos.x, e->cTransform->pos.y));
@@ -174,6 +219,8 @@ void Game::sRender(void) {
 		e->cShape->circle.setRotation(angle);
 		m_window.draw(e->cShape->circle);
 	}
+
+	// Displays buffer
 	m_window.display();
 }
 
