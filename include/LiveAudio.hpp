@@ -1,10 +1,12 @@
 #pragma once
 #include <SFML/Audio.hpp>
+#include "FastFourierTransform.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <mutex>
 #include <vector>
+#include <complex.h>
 
 class LiveAudio : public sf::SoundStream {
 	private:
@@ -26,6 +28,7 @@ class LiveAudio : public sf::SoundStream {
 		std::mutex				  m_mutex;
 		std::vector<std::int16_t> m_pendingSamples;
 		std::vector<std::int16_t> m_playingSamples;
+		std::complex<float>       m_freqs[SAMPLES];
 
 	public:
 		LiveAudio() : m_recorder(*this) {}
@@ -52,10 +55,16 @@ class LiveAudio : public sf::SoundStream {
 			play();
 			return (true);
 		}
+
 		void stopStream() {
 			m_recorder.stop();
 			stop();
 		}
+
+		std::complex<float>* getFreqs() {
+		    return m_freqs;
+		}
+
 		void receiveAudio(const std::int16_t *samples,
 						  std::size_t		  sampleCount) {
 			std::lock_guard<std::mutex> lock(m_mutex);
@@ -65,6 +74,8 @@ class LiveAudio : public sf::SoundStream {
 				m_pendingSamples.erase(m_pendingSamples.begin(),
 									   m_pendingSamples.end() - 22050);
 			}
+			auto normalized = int16_normalize_float(samples);
+			fft_ffs(normalized.data(), 1, m_freqs, sampleCount);
 		}
 
 		bool onGetData(Chunk &data) override {
