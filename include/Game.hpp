@@ -47,10 +47,11 @@ class Game {
 		unsigned int	 m_currentAudioSourceIndex = 0;
 		std::string		 m_currentAudioSourceName;
 
-		unsigned int m_movementSpeed = 5;
+		unsigned int m_movementSpeed = 1;
+		float		 m_velocityLoss = 0.8;
+		Vec2		 m_gravity{0, 4};
 
 		std::shared_ptr<Entity> m_player;
-		Vec2					m_gravity{0, 4};
 
 		void init(const std::string &path);
 		void setPaused(const bool paused);
@@ -79,7 +80,11 @@ class Game {
 		sf::Vector2u windowSize{1920, 1080};
 
 		void bounceObjectFromWalls(EntityPtr e);
+		void reflectObjectVelocity(EntityPtr e, Vec2 &surfaceNormal);
+		void reflectObjectVelocity(EntityPtr e, Vec2 surfaceNormal);
 		void parseConfig(const std::string &config);
+
+		float dot(Vec2 v1, Vec2 v2);
 
 	public:
 		Game(const std::string &config);

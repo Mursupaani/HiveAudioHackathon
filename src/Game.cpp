@@ -126,26 +126,26 @@ void Game::sMovement(void) {
 	// FIXME: Move to handle player movement
 	// m_player->cTransform->velocity = {0, 0};
 	if (m_player->cInput->up)
-		m_player->cTransform->velocity.y += -1;
+		m_player->cTransform->velocity.y -= m_movementSpeed;
 	if (m_player->cInput->down)
-		m_player->cTransform->velocity.y += 1;
+		m_player->cTransform->velocity.y += m_movementSpeed;
 	if (m_player->cInput->left)
-		m_player->cTransform->velocity.x += -1;
+		m_player->cTransform->velocity.x -= m_movementSpeed;
 	if (m_player->cInput->right)
-		m_player->cTransform->velocity.x += 1;
+		m_player->cTransform->velocity.x += m_movementSpeed;
 	// m_player->cTransform->velocity += m_gravity;
 	for (auto &e : m_entities.getEntities()) {
 		if (e->cTransform) {
 			e->cTransform->prevPos = e->cTransform->pos;
 			e->cTransform->pos += e->cTransform->velocity;
-			if (e->cTransform->velocity.y < -10)
-				e->cTransform->velocity.y = -10;
-			if (e->cTransform->velocity.y > 10)
-				e->cTransform->velocity.y = 10;
-			if (e->cTransform->velocity.x < -10)
-				e->cTransform->velocity.x = -10;
-			if (e->cTransform->velocity.x > 10)
-				e->cTransform->velocity.x = 10;
+			// if (e->cTransform->velocity.y < -10)
+			// 	e->cTransform->velocity.y = -10;
+			// if (e->cTransform->velocity.y > 10)
+			// 	e->cTransform->velocity.y = 10;
+			// if (e->cTransform->velocity.x < -10)
+			// 	e->cTransform->velocity.x = -10;
+			// if (e->cTransform->velocity.x > 10)
+			// 	e->cTransform->velocity.x = 10;
 			bounceObjectFromWalls(e);
 		}
 	}
@@ -163,15 +163,19 @@ void Game::sUserInput(void) {
 					m_running = false;
 					break;
 				case sf::Keyboard::Key::W:
+				case sf::Keyboard::Key::Up:
 					m_player->cInput->up = true;
 					break;
 				case sf::Keyboard::Key::A:
+				case sf::Keyboard::Key::Left:
 					m_player->cInput->left = true;
 					break;
 				case sf::Keyboard::Key::S:
+				case sf::Keyboard::Key::Down:
 					m_player->cInput->down = true;
 					break;
 				case sf::Keyboard::Key::D:
+				case sf::Keyboard::Key::Right:
 					m_player->cInput->right = true;
 					break;
 				case sf::Keyboard::Key::R:
@@ -180,6 +184,9 @@ void Game::sUserInput(void) {
 				case sf::Keyboard::Key::M:
 					chooseAudioSource();
 					break;
+				case sf::Keyboard::Key::Space:
+					m_player->cTransform->velocity += Vec2(0, -30);
+					break;
 				default:
 					break;
 			}
@@ -187,15 +194,19 @@ void Game::sUserInput(void) {
 		if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>()) {
 			switch (keyReleased->code) {
 				case sf::Keyboard::Key::W:
+				case sf::Keyboard::Key::Up:
 					m_player->cInput->up = false;
 					break;
 				case sf::Keyboard::Key::A:
+				case sf::Keyboard::Key::Left:
 					m_player->cInput->left = false;
 					break;
 				case sf::Keyboard::Key::S:
+				case sf::Keyboard::Key::Down:
 					m_player->cInput->down = false;
 					break;
 				case sf::Keyboard::Key::D:
+				case sf::Keyboard::Key::Right:
 					m_player->cInput->right = false;
 					break;
 				default:
@@ -317,6 +328,24 @@ void Game::spawnSpecialWeapon(std::shared_ptr<Entity> &entity) {
 	(void)entity;
 }
 
+float Game::dot(Vec2 v1, Vec2 v2) {
+	return (v1.x * v2.x + v1.y * v2.y);
+}
+
+void Game::reflectObjectVelocity(EntityPtr e, Vec2 &surfaceNormal) {
+	surfaceNormal.normalize();
+	float dotProduct = dot(e->cTransform->velocity, surfaceNormal);
+	e->cTransform->velocity -= 2 * (dotProduct)*surfaceNormal;
+	e->cTransform->velocity *= m_velocityLoss;
+}
+
+void Game::reflectObjectVelocity(EntityPtr e, Vec2 surfaceNormal) {
+	surfaceNormal.normalize();
+	float dotProduct = dot(e->cTransform->velocity, surfaceNormal);
+	e->cTransform->velocity -= 2 * (dotProduct)*surfaceNormal;
+	e->cTransform->velocity *= m_velocityLoss;
+}
+
 void Game::bounceObjectFromWalls(EntityPtr e) {
 	unsigned int screenWidth = windowSize.x;
 	unsigned int screenHeight = windowSize.y;
@@ -325,19 +354,23 @@ void Game::bounceObjectFromWalls(EntityPtr e) {
 	float ySize = e->cShape->circle.getLocalBounds().size.y / 2.0f;
 	if (e->cTransform->pos.x - xSize <= 0) {
 		e->cTransform->pos = e->cTransform->prevPos;
-		e->cTransform->velocity.x *= -0.5;
+		reflectObjectVelocity(e, Vec2(1, 0));
+		// e->cTransform->velocity.x *= -0.5;
 	}
 	if (e->cTransform->pos.y - ySize <= 0) {
 		e->cTransform->pos = e->cTransform->prevPos;
-		e->cTransform->velocity.y *= -0.5;
+		reflectObjectVelocity(e, Vec2(0, 1));
+		// e->cTransform->velocity.y *= -0.5;
 	}
 	if (e->cTransform->pos.x + xSize >= screenWidth) {
 		e->cTransform->pos = e->cTransform->prevPos;
-		e->cTransform->velocity.x *= -0.5;
+		reflectObjectVelocity(e, Vec2(-1, 0));
+		// e->cTransform->velocity.x *= -0.5;
 	}
 	if (e->cTransform->pos.y + ySize >= screenHeight) {
 		e->cTransform->pos = e->cTransform->prevPos;
-		e->cTransform->velocity.y *= -0.5;
+		reflectObjectVelocity(e, Vec2(0, -1));
+		// e->cTransform->velocity.y *= -0.5;
 	}
 }
 
