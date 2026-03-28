@@ -49,7 +49,7 @@ class Game {
 
 		unsigned int m_movementSpeed = 1;
 		float		 m_velocityLoss = 0.8;
-		Vec2		 m_gravity{0, 4};
+		Vec2		 m_gravity{0, 2};
 
 		std::shared_ptr<Entity> m_player;
 

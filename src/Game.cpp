@@ -133,7 +133,7 @@ void Game::sMovement(void) {
 		m_player->cTransform->velocity.x -= m_movementSpeed;
 	if (m_player->cInput->right)
 		m_player->cTransform->velocity.x += m_movementSpeed;
-	// m_player->cTransform->velocity += m_gravity;
+	m_player->cTransform->velocity += m_gravity;
 	for (auto &e : m_entities.getEntities()) {
 		if (e->cTransform) {
 			e->cTransform->prevPos = e->cTransform->pos;
@@ -149,6 +149,7 @@ void Game::sMovement(void) {
 			bounceObjectFromWalls(e);
 		}
 	}
+	std::cout << m_player->cTransform->velocity << std::endl;
 }
 
 void Game::sUserInput(void) {
@@ -353,22 +354,22 @@ void Game::bounceObjectFromWalls(EntityPtr e) {
 	float xSize = e->cShape->circle.getLocalBounds().size.x / 2.0f;
 	float ySize = e->cShape->circle.getLocalBounds().size.y / 2.0f;
 	if (e->cTransform->pos.x - xSize <= 0) {
-		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->pos.x = e->cTransform->prevPos.x;
 		reflectObjectVelocity(e, Vec2(1, 0));
 		// e->cTransform->velocity.x *= -0.5;
 	}
 	if (e->cTransform->pos.y - ySize <= 0) {
-		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->pos.y = e->cTransform->prevPos.y;
 		reflectObjectVelocity(e, Vec2(0, 1));
 		// e->cTransform->velocity.y *= -0.5;
 	}
 	if (e->cTransform->pos.x + xSize >= screenWidth) {
-		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->pos.x = e->cTransform->prevPos.x;
 		reflectObjectVelocity(e, Vec2(-1, 0));
 		// e->cTransform->velocity.x *= -0.5;
 	}
 	if (e->cTransform->pos.y + ySize >= screenHeight) {
-		e->cTransform->pos = e->cTransform->prevPos;
+		e->cTransform->pos.y = e->cTransform->prevPos.y;
 		reflectObjectVelocity(e, Vec2(0, -1));
 		// e->cTransform->velocity.y *= -0.5;
 	}
