@@ -47,7 +47,10 @@ class Game {
 		unsigned int	 m_currentAudioSourceIndex = 0;
 		std::string		 m_currentAudioSourceName;
 
+		unsigned int m_movementSpeed = 5;
+
 		std::shared_ptr<Entity> m_player;
+		Vec2					m_gravity{0, 4};
 
 		void init(const std::string &path);
 		void setPaused(const bool paused);
@@ -75,7 +78,7 @@ class Game {
 		unsigned int m_fontSize = 12;
 		sf::Vector2u windowSize{1920, 1080};
 
-		void bounceObjectsFromWalls(void);
+		void bounceObjectFromWalls(EntityPtr e);
 		void parseConfig(const std::string &config);
 
 	public:
