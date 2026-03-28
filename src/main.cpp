@@ -1,6 +1,8 @@
+#include <SFML/Audio.hpp>
 #include <exception>
 
 #include "Game.hpp"
+#include "Recorder.hpp"
 #include "Vec2.hpp"
 
 /* NOTE::
@@ -12,9 +14,34 @@
  *					Componnent
  */
 
+void test(void) {
+	sf::SoundBufferRecorder recorder;
+	// Recorder recorder;
+	auto devices = recorder.getAvailableDevices();
+	for (const auto &e : devices)
+		std::cout << e << std::endl;
+	bool	 nothing = recorder.setDevice(devices[0]);
+	sf::Time time = sf::milliseconds(2000);
+	while (true) {
+		if (recorder.start()) {
+			sf::sleep(time);
+			recorder.stop();
+		}
+		const sf::SoundBuffer buffer = recorder.getBuffer();
+		sf::Sound			  test(buffer);
+		test.play();
+		sf::sleep(time);
+	}
+}
+
 int main(void) {
-	Game game("config.txt");
-	game.run();
+	test();
+	// sf::Music test("test.wav");
+	// test.play();
+	// test.setVolume(50);
+	// while (true) {}
+	// Game game("config.txt");
+	// game.run();
 }
 
 // NOTE: Run game like this!
