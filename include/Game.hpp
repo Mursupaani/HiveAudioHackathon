@@ -48,7 +48,7 @@ class Game {
 		std::string		 m_currentAudioSourceName;
 
 		unsigned int	m_movementSpeed = 1;
-		float			m_bounciness = 0.8;
+		float			m_bounciness = 1;
 		Vec2			m_gravity{0, 2};
 		sf::VertexArray m_plot = sf::VertexArray(sf::PrimitiveType::LineStrip, SAMPLES / 16);
 
