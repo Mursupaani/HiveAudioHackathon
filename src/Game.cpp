@@ -228,7 +228,7 @@ void Game::sRender(void) {
 
 	auto freqs = m_liveAudio.getFreqs();
 
-	sf::VertexArray plot(sf::PrimitiveType::LineStrip, SAMPLES);
+	sf::VertexArray plot(sf::PrimitiveType::LineStrip, SAMPLES / 2);
 
 	// TODO: calculate x correctly from windowSize
 	for (size_t i = 0; i < SAMPLES / 2; i++) {
@@ -238,6 +238,7 @@ void Game::sRender(void) {
 		plot[i].position = sf::Vector2f(x, y);
 		plot[i].color = sf::Color::Cyan;
 	}
+	m_window.draw(plot);
 
 	for (auto &e : m_entities.getEntities()) {
 		e->cShape->circle.setPosition(
@@ -246,7 +247,6 @@ void Game::sRender(void) {
 		sf::Angle angle = sf::degrees(e->cTransform->angle);
 		e->cShape->circle.setRotation(angle);
 		m_window.draw(e->cShape->circle);
-		m_window.draw(plot);
 	}
 
 	// Displays buffer

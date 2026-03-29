@@ -29,7 +29,7 @@ void fft_ffs(const std::complex<float> in[], std::size_t stride, std::complex<fl
 const std::vector<std::complex<float>> int16_normalize_float(const std::int16_t *samples) {
     std::vector<std::complex<float>> arr(SAMPLES);
     for (std::size_t i = 0; i < SAMPLES; i++) {
-        arr[i] = static_cast<std::complex<float>>(normalize(samples[i]));
+        arr[i] = static_cast<std::complex<float>>(normalize(samples[i]) * flat_top_window(i, SAMPLES));
     }
     return arr;
 }
