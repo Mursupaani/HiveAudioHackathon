@@ -79,19 +79,20 @@ void Game::gameLoop(void) {
 		m_entities.update();
 
 		auto freqs = m_liveAudio.getFreqs();
-
-		m_plot = sf::VertexArray(sf::PrimitiveType::LineStrip, SAMPLES / 8);
-
 		// TODO: calculate x correctly from windowSize
-		for (size_t i = 0; i < SAMPLES / 8; i++) {
-			float x = i * 8.f;
+		for (size_t i = 0; i < SAMPLES / 16; i++) {
+			float x = windowSize.x * (i * 16.f / SAMPLES);
 			float y = windowSize.y -
 			( std::abs(freqs[i] * 100.f) +
 			std::abs(freqs[i + 1] * 100.f) +
 			std::abs(freqs[i + 2] * 100.f) +
-			std::abs(freqs[i + 3] * 100.f) / 4);
+			std::abs(freqs[i + 3] * 100.f) +
+			std::abs(freqs[i + 4] * 100.f) +
+			std::abs(freqs[i + 5] * 100.f) +
+			std::abs(freqs[i + 6] * 100.f) +
+			std::abs(freqs[i + 7] * 100.f) / 8);
 
-			m_plot[i].position = sf::Vector2f(x, y);
+			m_plot[i].position = sf::Vector2f(x, (y + m_plot[i].position.y) / 2 );
 			m_plot[i].color = sf::Color::Cyan;
 		}
 

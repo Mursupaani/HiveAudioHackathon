@@ -50,7 +50,7 @@ class Game {
 		unsigned int	m_movementSpeed = 1;
 		float			m_bounciness = 0.8;
 		Vec2			m_gravity{0, 2};
-		sf::VertexArray m_plot;
+		sf::VertexArray m_plot = sf::VertexArray(sf::PrimitiveType::LineStrip, SAMPLES / 16);
 
 		std::shared_ptr<Entity> m_player;
 
