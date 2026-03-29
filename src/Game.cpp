@@ -85,11 +85,10 @@ void Game::gameLoop(void) {
 		// TODO: calculate x correctly from windowSize
 		for (size_t i = 0; i < SAMPLES / 8; i++) {
 			float x = i * 8.f;
-			float y = windowSize.y -
-			( std::abs(freqs[i] * 100.f) +
-			std::abs(freqs[i + 1] * 100.f) +
-			std::abs(freqs[i + 2] * 100.f) +
-			std::abs(freqs[i + 3] * 100.f) / 4);
+			float y = windowSize.y - (std::abs(freqs[i] * 100.f) +
+									  std::abs(freqs[i + 1] * 100.f) +
+									  std::abs(freqs[i + 2] * 100.f) +
+									  std::abs(freqs[i + 3] * 100.f) / 4);
 
 			m_plot[i].position = sf::Vector2f(x, y);
 			m_plot[i].color = sf::Color::Cyan;
@@ -159,7 +158,7 @@ void Game::sMovement(void) {
 		m_player->cTransform->velocity.x -= m_movementSpeed;
 	if (m_player->cInput->right)
 		m_player->cTransform->velocity.x += m_movementSpeed;
-	m_player->cTransform->velocity += m_gravity;
+	// m_player->cTransform->velocity += m_gravity;
 	for (auto &e : m_entities.getEntities()) {
 		if (e->cTransform) {
 			e->cTransform->prevPos = e->cTransform->pos;
@@ -353,40 +352,35 @@ void Game::sCollision(void) {
 		bounceObjectFromWalls(e);
 	}
 
-	// Vec2  totalNormal(0, 0);
-	// float maxOverlap = 0.0f;
-	// int	  collisionCount = 0;
-	// for (auto &e : m_entities.getEntities("frequency")) {
-	// 	if (entitiesCollide(m_player, e)) {
-	// 		float pRadius = m_player->cShape->circle.getRadius();
-	// 		float eRadius = e->cShape->circle.getRadius();
-	//
-	// 		Vec2  delta = m_player->cTransform->pos - e->cTransform->pos;
-	// 		float distance = m_player->cTransform->pos.dist(e->cTransform->pos);
-	// 		float sumRadii = pRadius + eRadius;
-	// 		if (distance < sumRadii) {
-	// 			Vec2 normal = delta / (distance == 0 ? 1.0f : distance);
-	// 			totalNormal += normal;
-	//
-	// 			float overlap = sumRadii - distance;
-	// 			if (overlap > maxOverlap)
-	// 				maxOverlap = overlap;
-	// 			++collisionCount;
-	// 		}
-	// 	}
-	// }
 	Vec2  totalNormal(0, 0);
 	float maxOverlap = 0.0f;
 	int	  collisionCount = 0;
 	for (auto &e : m_entities.getEntities("frequency")) {
-		if (entitiesCollide(m_player, e)) {
-			float sumRadii = m_player->cShape->circle.getRadius() +
-							 e->cShape->circle.getRadius();
+		float pRadius = m_player->cShape->circle.getRadius();
+		float eRadius = e->cShape->circle.getRadius();
+		float sumRadii = pRadius + eRadius;
+		float dx = std::abs(m_player->cTransform->pos.x - e->cTransform->pos.x);
+		bool  isUnderneath = (dx < sumRadii) && (m_player->cTransform->pos.y >
+												 e->cTransform->pos.y);
+		if (entitiesCollide(m_player, e) || isUnderneath) {
 			float distance = m_player->cTransform->pos.dist(e->cTransform->pos);
 			Vec2  normal = m_player->cTransform->pos - e->cTransform->pos;
+
+			normal.normalize();
+			if (distance == 0) {
+				normal.y = -normal.y;
+			}
+
 			totalNormal += normal;
 
-			float overlap = sumRadii - distance;
+			float overlap = 0.0f;
+			if (isUnderneath) {
+				float trueTop = e->cTransform->pos.y + pRadius;
+				float playerBottom = m_player->cTransform->pos.y = pRadius;
+				overlap = playerBottom - trueTop;
+			} else {
+				overlap = sumRadii - distance;
+			}
 			if (overlap > maxOverlap)
 				maxOverlap = overlap;
 			++collisionCount;
@@ -394,6 +388,9 @@ void Game::sCollision(void) {
 	}
 	if (collisionCount > 0) {
 		totalNormal.normalize();
+		if (totalNormal.y > 0) {
+			totalNormal.y = -totalNormal.y;
+		}
 		m_player->cTransform->pos += totalNormal * maxOverlap;
 		float dotProduct = dot(m_player->cTransform->velocity, totalNormal);
 		if (dotProduct < 0) {
