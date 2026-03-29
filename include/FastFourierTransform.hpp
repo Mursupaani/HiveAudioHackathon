@@ -31,3 +31,17 @@ constexpr float normalize (T value) {
 }
 
 const std::vector<std::complex<float>> int16_normalize_float(const std::int16_t *samples);
+
+constexpr float flat_top_window(std::size_t n, std::size_t N) {
+  constexpr float a0 = 0.21557895f;
+  constexpr float a1 = 0.41663158f;
+  constexpr float a2 = 0.277263158f;
+  constexpr float a3 = 0.083578947f;
+  constexpr float a4 = 0.006947368f;
+  float x = static_cast<float>(n) / static_cast<float>(N);
+  return a0
+       - a1 * std::cos(TAU * x)
+       + a2 * std::cos(TAU * 2.f * x)
+       - a3 * std::cos(TAU * 3.f * x)
+       + a4 * std::cos(TAU * 4.f * x);
+}
