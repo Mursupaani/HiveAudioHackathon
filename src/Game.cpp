@@ -129,7 +129,7 @@ void Game::init(const std::string &path) {
 		m_playerConfig.OT >> m_playerConfig.V;
 
 	// Set up window parameters
-	m_window.create(sf::VideoMode(windowSize), "Geometry Wars",
+	m_window.create(sf::VideoMode(windowSize), "Sound Snake",
 					sf::Style::Default, m_windowState);
 	m_window.setFramerateLimit(m_framerateLimit);
 	windowSize.x = m_window.getSize().x;
@@ -265,7 +265,8 @@ void Game::sRender(void) {
 	m_window.draw(*m_text);
 
 	// TODO: calculate x correctly from windowSize
-	m_window.draw(m_plot);
+	if (m_currentFrame % 2 == 0)
+		m_window.draw(m_plot);
 
 	for (auto &e : m_entities.getEntities()) {
 		e->cShape->circle.setPosition(

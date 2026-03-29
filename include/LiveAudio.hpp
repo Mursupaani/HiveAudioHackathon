@@ -28,6 +28,8 @@ class LiveAudio : public sf::SoundStream {
 		std::vector<std::int16_t> m_pendingSamples;
 		std::vector<std::int16_t> m_playingSamples;
 		std::complex<float>       m_freqs[SAMPLES];
+		std::size_t               m_fftSkip = 0;
+		static constexpr std::size_t FFT_EVERY_N = 3;
 
 	public:
 		LiveRecorder recorder;
@@ -76,8 +78,11 @@ class LiveAudio : public sf::SoundStream {
 				m_pendingSamples.erase(m_pendingSamples.begin(),
 									   m_pendingSamples.end() - 22050);
 			}
-			auto normalized = int16_normalize_float(samples, sampleCount);
-			fft_ffs(normalized.data(), 1, m_freqs, sampleCount);
+			if (++m_fftSkip >= FFT_EVERY_N) {
+				m_fftSkip = 0;
+				auto normalized = int16_normalize_float(samples, sampleCount);
+				fft_ffs(normalized.data(), 1, m_freqs, sampleCount);
+			}
 		}
 
 		bool onGetData(Chunk &data) override {
