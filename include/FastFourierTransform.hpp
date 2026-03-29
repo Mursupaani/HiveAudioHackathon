@@ -30,7 +30,7 @@ constexpr float normalize (T value) {
     ;
 }
 
-const std::vector<std::complex<float>> int16_normalize_float(const std::int16_t *samples);
+const std::vector<std::complex<float>> int16_normalize_float(const std::int16_t *samples, std::size_t N);
 
 constexpr float flat_top_window(std::size_t n, std::size_t N) {
   constexpr float a0 = 0.21557895f;

@@ -76,7 +76,7 @@ class LiveAudio : public sf::SoundStream {
 				m_pendingSamples.erase(m_pendingSamples.begin(),
 									   m_pendingSamples.end() - 22050);
 			}
-			auto normalized = int16_normalize_float(samples);
+			auto normalized = int16_normalize_float(samples, sampleCount);
 			fft_ffs(normalized.data(), 1, m_freqs, sampleCount);
 		}
 
