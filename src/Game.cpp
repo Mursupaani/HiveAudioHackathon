@@ -9,9 +9,12 @@
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/WindowEnums.hpp>
+#include <cmath>
+#include <cstddef>
 #include <cstdlib>
 #include <fstream>
 #include <memory>
+#include <numbers>
 
 #include "Components.hpp"
 #include "Entity.hpp"
@@ -71,17 +74,40 @@ void Game::gameLoop(void) {
 	// Some systems shouldn't (movement / input)
 
 	while (m_running) {
+		if (m_player->isActive() == false)
+			reset();
 		m_entities.update();
+
+		auto freqs = m_liveAudio.getFreqs();
+
+		m_plot = sf::VertexArray(sf::PrimitiveType::LineStrip, SAMPLES / 8);
+
+		// TODO: calculate x correctly from windowSize
+		for (size_t i = 0; i < SAMPLES / 8; i++) {
+			float x = i * 8.f;
+			float y = windowSize.y -
+			( std::abs(freqs[i] * 100.f) +
+			std::abs(freqs[i + 1] * 100.f) +
+			std::abs(freqs[i + 2] * 100.f) +
+			std::abs(freqs[i + 3] * 100.f) / 4);
+
+			m_plot[i].position = sf::Vector2f(x, y);
+			m_plot[i].color = sf::Color::Cyan;
+		}
 
 		sUserInput();
 
 		if (!m_paused) {
-			sEnemySpawner();
+			// sEnemySpawner();
+			sFrequencySpawner();
 			sMovement();
 			sCollision();
 		}
 
 		sRender();
+		for (auto &e : m_entities.getEntities("frequency")) {
+			e->destroy();
+		}
 
 		// NOTE: increment the current frame
 		//  may need to be moved when pause implemented
@@ -146,7 +172,7 @@ void Game::sMovement(void) {
 			// 	e->cTransform->velocity.x = -10;
 			// if (e->cTransform->velocity.x > 10)
 			// 	e->cTransform->velocity.x = 10;
-			bounceObjectFromWalls(e);
+			// bounceObjectFromWalls(e);
 		}
 	}
 }
@@ -237,23 +263,8 @@ void Game::sRender(void) {
 	// Renders audio source name
 	m_window.draw(*m_text);
 
-	auto freqs = m_liveAudio.getFreqs();
-
-	sf::VertexArray plot(sf::PrimitiveType::LineStrip, SAMPLES / 8);
-
 	// TODO: calculate x correctly from windowSize
-	for (size_t i = 0; i < SAMPLES / 8; i++) {
-		float x = i * 8.f;
-		float y = windowSize.y -
-		( std::abs(freqs[i] * 100.f) +
-		std::abs(freqs[i + 1] * 100.f) +
-		std::abs(freqs[i + 2] * 100.f) +
-		std::abs(freqs[i + 3] * 100.f) / 4);
-
-		plot[i].position = sf::Vector2f(x, y);
-		plot[i].color = sf::Color::Cyan;
-	}
-	m_window.draw(plot);
+	m_window.draw(m_plot);
 
 	for (auto &e : m_entities.getEntities()) {
 		e->cShape->circle.setPosition(
@@ -268,20 +279,129 @@ void Game::sRender(void) {
 	m_window.display();
 }
 
+void Game::spawnFrequency(const Vec2 pos) {
+	// Make sure enemy is spawned according to m_enemyConfig
+	// Must be completely within window
+	auto enemy = m_entities.addEntity("frequency");
+
+	// randomize position
+
+	// randomize velocity vector (direction) based on speed
+
+	enemy->cTransform = new CTransform(pos, Vec2(0, 0), 0.0f);
+
+	// randomize vertices based on VMIN and VMAX
+	int vertices = 6;
+
+	m_enemyConfig.SR = 16.0f;
+	m_enemyConfig.OR = 255;
+	m_enemyConfig.OG = 0;
+	m_enemyConfig.OB = 255;
+	m_enemyConfig.OT = 0;
+	enemy->cShape = new CShape(
+		m_enemyConfig.SR, vertices,
+		sf::Color(m_enemyConfig.OR, m_enemyConfig.OG, m_enemyConfig.OB),
+		sf::Color(m_enemyConfig.OR, m_enemyConfig.OG, m_enemyConfig.OB),
+		m_enemyConfig.OT);
+
+	// m_lastEnemySpawnTime = m_currentFrame;
+}
+
+void Game::sFrequencySpawner(void) {
+	for (size_t i = 0; i < m_plot.getVertexCount(); ++i) {
+		Vec2 vertex(m_plot[i].position.x, m_plot[i].position.y);
+		spawnFrequency(vertex);
+	}
+}
+
 void Game::sEnemySpawner(void) {
 	// FIXME: use m_currendFrame - m_lastEnemySpawnTime
 	if (m_currentFrame % 60 == 0)
 		spawnEnemy();
 }
 
+bool Game::entityAndVertexCollide(const EntityPtr &a, const Vec2 &v) {
+	float dist = a->cTransform->pos.dist(v);
+	float aR2 = a->cShape->circle.getRadius() * a->cShape->circle.getRadius();
+	return (dist * dist <= aR2);
+}
+
+bool Game::entitiesCollide(const EntityPtr &a, const EntityPtr &b) {
+	if (!a->isActive() || !b->isActive()) {
+		return (false);
+	}
+	float dist = a->cTransform->pos.dist(b->cTransform->pos);
+	float aR2 = a->cShape->circle.getRadius() * a->cShape->circle.getRadius();
+	float bR2 = b->cShape->circle.getRadius() * b->cShape->circle.getRadius();
+	return (dist * dist <= aR2 + bR2);
+}
+
 void Game::sCollision(void) {
 	for (auto &b : m_entities.getEntities("bullet")) {
 		for (auto &e : m_entities.getEntities("enemy")) {
-			// FIXME: Add logic
-			(void)b;
-			(void)e;
+			if (entitiesCollide(b, e)) {
+				b->destroy();
+				e->destroy();
+			}
 		}
 	}
+	for (auto &e : m_entities.getEntities("enemy")) {
+		if (entitiesCollide(e, m_player)) {
+			e->destroy();
+			m_player->destroy();
+		}
+		bounceObjectFromWalls(e);
+	}
+
+	// Vec2  totalNormal(0, 0);
+	// float maxOverlap = 0.0f;
+	// int	  collisionCount = 0;
+	// for (auto &e : m_entities.getEntities("frequency")) {
+	// 	if (entitiesCollide(m_player, e)) {
+	// 		float pRadius = m_player->cShape->circle.getRadius();
+	// 		float eRadius = e->cShape->circle.getRadius();
+	//
+	// 		Vec2  delta = m_player->cTransform->pos - e->cTransform->pos;
+	// 		float distance = m_player->cTransform->pos.dist(e->cTransform->pos);
+	// 		float sumRadii = pRadius + eRadius;
+	// 		if (distance < sumRadii) {
+	// 			Vec2 normal = delta / (distance == 0 ? 1.0f : distance);
+	// 			totalNormal += normal;
+	//
+	// 			float overlap = sumRadii - distance;
+	// 			if (overlap > maxOverlap)
+	// 				maxOverlap = overlap;
+	// 			++collisionCount;
+	// 		}
+	// 	}
+	// }
+	Vec2  totalNormal(0, 0);
+	float maxOverlap = 0.0f;
+	int	  collisionCount = 0;
+	for (auto &e : m_entities.getEntities("frequency")) {
+		if (entitiesCollide(m_player, e)) {
+			float sumRadii = m_player->cShape->circle.getRadius() +
+							 e->cShape->circle.getRadius();
+			float distance = m_player->cTransform->pos.dist(e->cTransform->pos);
+			Vec2  normal = m_player->cTransform->pos - e->cTransform->pos;
+			totalNormal += normal;
+
+			float overlap = sumRadii - distance;
+			if (overlap > maxOverlap)
+				maxOverlap = overlap;
+			++collisionCount;
+		}
+	}
+	if (collisionCount > 0) {
+		totalNormal.normalize();
+		m_player->cTransform->pos += totalNormal * maxOverlap;
+		float dotProduct = dot(m_player->cTransform->velocity, totalNormal);
+		if (dotProduct < 0) {
+			m_player->cTransform->velocity -=
+				totalNormal * (2.0f * dotProduct * m_bounciness);
+		}
+	}
+	bounceObjectFromWalls(m_player);
 }
 
 void Game::spawnPlayer(void) {
@@ -291,7 +411,7 @@ void Game::spawnPlayer(void) {
 	player->cTransform =
 		new CTransform(Vec2(middleX, middleY), Vec2(1.0f, 1.0f), 0.0f);
 	player->cShape =
-		new CShape(32.0f, 8, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
+		new CShape(32.0f, 6, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
 	player->cInput = new CInput();
 
 	m_player = player;
@@ -350,18 +470,11 @@ float Game::dot(Vec2 v1, Vec2 v2) {
 	return (v1.x * v2.x + v1.y * v2.y);
 }
 
-void Game::reflectObjectVelocity(EntityPtr e, Vec2 &surfaceNormal) {
-	surfaceNormal.normalize();
-	float dotProduct = dot(e->cTransform->velocity, surfaceNormal);
-	e->cTransform->velocity -= 2 * (dotProduct)*surfaceNormal;
-	e->cTransform->velocity *= m_velocityLoss;
-}
-
 void Game::reflectObjectVelocity(EntityPtr e, Vec2 surfaceNormal) {
 	surfaceNormal.normalize();
 	float dotProduct = dot(e->cTransform->velocity, surfaceNormal);
 	e->cTransform->velocity -= 2 * (dotProduct)*surfaceNormal;
-	e->cTransform->velocity *= m_velocityLoss;
+	e->cTransform->velocity *= m_bounciness;
 }
 
 void Game::bounceObjectFromWalls(EntityPtr e) {
