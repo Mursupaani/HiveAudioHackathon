@@ -13,8 +13,10 @@
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>
+#include <limits>
 #include <memory>
 #include <numbers>
+#include <string>
 
 #include "Components.hpp"
 #include "Entity.hpp"
@@ -31,12 +33,17 @@ Game::Game(const std::string &config) {
 	m_text = new sf::Text(m_font);
 	m_text->setCharacterSize(18);
 
+	m_scoreText = new sf::Text(m_font);
+	m_scoreText->setCharacterSize(18);
+	m_scoreText->setPosition(sf::Vector2f(0, 32));
+
 	auto audioSources = m_liveAudio.recorder.getAvailableDevices();
 	if (!m_liveAudio.recorder.setDevice(audioSources[1])) {
 		std::cerr << "Couldn't set audio int source" << std::endl;
 		exit(1);
 	}
 	m_text->setString(audioSources[0]);
+	m_scoreText->setString("Score: 0");
 }
 
 Game::~Game(void) {
@@ -50,6 +57,17 @@ void Game::run(void) {
 		return;
 	}
 	gameLoop();
+}
+
+Vec2 Game::randomVecWithinWindow(const float radius) {
+	int				   r = std::roundf(radius);
+	std::random_device dev;
+	std::mt19937	   rng(dev());
+	std::uniform_int_distribution<std::mt19937::result_type> distWidth(
+		r, windowSize.x - r);  // distribution in range [1, 6]
+	std::uniform_int_distribution<std::mt19937::result_type> distHeight(
+		r, windowSize.y - r);  // distribution in range [1, 6]
+	return (Vec2(distWidth(rng), distHeight(rng)));
 }
 
 void Game::chooseAudioSource(void) {
@@ -97,7 +115,8 @@ void Game::gameLoop(void) {
 		sUserInput();
 
 		if (!m_paused) {
-			// sEnemySpawner();
+			sEnemySpawner();
+			sCollectibleSpawner();
 			sFrequencySpawner();
 			sMovement();
 			sCollision();
@@ -140,9 +159,13 @@ void Game::reset(void) {
 	EntityVec &enemies = m_entities.getEntities("enemy");
 	for (auto &e : enemies)
 		e->destroy();
+	EntityVec &collectibles = m_entities.getEntities("collectible");
+	for (auto &e : collectibles)
+		e->destroy();
 	m_player->destroy();
 	spawnPlayer();
 	m_score = 0;
+	m_scoreText->setString("Score: " + std::to_string(m_score));
 }
 
 // NOTE: Private:
@@ -261,6 +284,7 @@ void Game::sRender(void) {
 
 	// Renders audio source name
 	m_window.draw(*m_text);
+	m_window.draw(*m_scoreText);
 
 	// TODO: calculate x correctly from windowSize
 	m_window.draw(m_plot);
@@ -298,6 +322,38 @@ void Game::spawnFrequency(const Vec2 pos) {
 	m_enemyConfig.OB = 255;
 	m_enemyConfig.OT = 0;
 	enemy->cShape = new CShape(
+		m_enemyConfig.SR, vertices,
+		sf::Color(m_enemyConfig.OR, m_enemyConfig.OG, m_enemyConfig.OB),
+		sf::Color(m_enemyConfig.OR, m_enemyConfig.OG, m_enemyConfig.OB),
+		m_enemyConfig.OT);
+
+	// m_lastEnemySpawnTime = m_currentFrame;
+}
+
+void Game::sCollectibleSpawner(void) {
+	if (m_currentFrame % 60 == 0)
+		spawnCollectible();
+}
+void Game::spawnCollectible(void) {
+	// Make sure enemy is spawned according to m_enemyConfig
+	// Must be completely within window
+	auto  collectible = m_entities.addEntity("collectible");
+	float radius = 20.0f;
+
+	// randomize position
+	Vec2 randomPos = randomVecWithinWindow(radius);
+
+	collectible->cTransform = new CTransform(randomPos, Vec2(0, 0), 0.0f);
+
+	// randomize vertices based on VMIN and VMAX
+	int vertices = 8;
+
+	m_enemyConfig.SR = radius;
+	m_enemyConfig.OR = 255;
+	m_enemyConfig.OG = 255;
+	m_enemyConfig.OB = 0;
+	m_enemyConfig.OT = 0;
+	collectible->cShape = new CShape(
 		m_enemyConfig.SR, vertices,
 		sf::Color(m_enemyConfig.OR, m_enemyConfig.OG, m_enemyConfig.OB),
 		sf::Color(m_enemyConfig.OR, m_enemyConfig.OG, m_enemyConfig.OB),
@@ -350,6 +406,13 @@ void Game::sCollision(void) {
 			m_player->destroy();
 		}
 		bounceObjectFromWalls(e);
+	}
+	for (auto &e : m_entities.getEntities("collectible")) {
+		if (entitiesCollide(e, m_player)) {
+			e->destroy();
+			++m_score;
+			m_scoreText->setString("Score: " + std::to_string(m_score));
+		}
 	}
 
 	Vec2  totalNormal(0, 0);
@@ -408,7 +471,7 @@ void Game::spawnPlayer(void) {
 	player->cTransform =
 		new CTransform(Vec2(middleX, middleY), Vec2(1.0f, 1.0f), 0.0f);
 	player->cShape =
-		new CShape(32.0f, 6, sf::Color(10, 10, 10), sf::Color(255, 0, 0), 4.0f);
+		new CShape(32.0f, 6, sf::Color(10, 10, 10), sf::Color(0, 0, 255), 4.0f);
 	player->cInput = new CInput();
 
 	m_player = player;
@@ -420,14 +483,13 @@ void Game::spawnEnemy(void) {
 	auto enemy = m_entities.addEntity("enemy");
 
 	// randomize position
-	float ex = std::rand() % m_window.getSize().x;
-	float ey = std::rand() % m_window.getSize().y;
+	Vec2 randomPos = randomVecWithinWindow(32.0f);
 
 	// randomize velocity vector (direction) based on speed
-	float rdx = 1.0f;
-	float rdy = 1.0f;
+	Vec2 randomVelocity = randomVecWithinWindow(0);
+	randomVelocity.normalize();
 
-	enemy->cTransform = new CTransform(Vec2(ex, ey), Vec2(rdx, rdy), 0.0f);
+	enemy->cTransform = new CTransform(randomPos, randomVelocity, 0.0f);
 
 	// randomize vertices based on VMIN and VMAX
 	int vertices = 4;

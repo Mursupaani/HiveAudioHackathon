@@ -6,6 +6,7 @@
 #include <exception>
 #include <fstream>
 #include <memory>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -35,6 +36,7 @@ class Game {
 		EntityManager	 m_entities;
 		sf::Font		 m_font;
 		sf::Text		*m_text = nullptr;
+		sf::Text		*m_scoreText = nullptr;
 		PlayerConfig	 m_playerConfig;
 		EnemyConfig		 m_enemyConfig;
 		BulletConfig	 m_BulletConfig;
@@ -63,11 +65,13 @@ class Game {
 		void sLifeSpan(void);
 		void sRender(void);
 		void sEnemySpawner(void);
+		void sCollectibleSpawner(void);
 		void sFrequencySpawner(void);
 		void sCollision(void);
 
 		void spawnPlayer(void);
 		void spawnEnemy(void);
+		void spawnCollectible(void);
 		void spawnFrequency(const Vec2 pos);
 		void spawnSmallEnemies(std::shared_ptr<Entity> &entity);
 		void spawnBullet(std::shared_ptr<Entity> &entity, const Vec2 &mousePos);
@@ -80,6 +84,8 @@ class Game {
 		void gameLoop(void);
 
 		void reset(void);
+
+		Vec2 randomVecWithinWindow(const float radius);
 
 		// const std::string m_homeDir = std::getenv("HOME");
 		unsigned int m_fontSize = 12;
