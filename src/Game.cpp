@@ -239,12 +239,16 @@ void Game::sRender(void) {
 
 	auto freqs = m_liveAudio.getFreqs();
 
-	sf::VertexArray plot(sf::PrimitiveType::LineStrip, SAMPLES / 2);
+	sf::VertexArray plot(sf::PrimitiveType::LineStrip, SAMPLES / 8);
 
 	// TODO: calculate x correctly from windowSize
-	for (size_t i = 0; i < SAMPLES / 2; i++) {
-		float x = i * 2.f;
-		float y = windowSize.y - std::abs(freqs[i] * 100.f);
+	for (size_t i = 0; i < SAMPLES / 8; i++) {
+		float x = i * 8.f;
+		float y = windowSize.y -
+		( std::abs(freqs[i] * 100.f) +
+		std::abs(freqs[i + 1] * 100.f) +
+		std::abs(freqs[i + 2] * 100.f) +
+		std::abs(freqs[i + 3] * 100.f) / 4);
 
 		plot[i].position = sf::Vector2f(x, y);
 		plot[i].color = sf::Color::Cyan;
