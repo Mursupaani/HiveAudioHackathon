@@ -47,9 +47,10 @@ class Game {
 		unsigned int	 m_currentAudioSourceIndex = 0;
 		std::string		 m_currentAudioSourceName;
 
-		unsigned int m_movementSpeed = 1;
-		float		 m_velocityLoss = 0.8;
-		Vec2		 m_gravity{0, 2};
+		unsigned int	m_movementSpeed = 1;
+		float			m_bounciness = 0.8;
+		Vec2			m_gravity{0, 2};
+		sf::VertexArray m_plot;
 
 		std::shared_ptr<Entity> m_player;
 
@@ -62,13 +63,18 @@ class Game {
 		void sLifeSpan(void);
 		void sRender(void);
 		void sEnemySpawner(void);
+		void sFrequencySpawner(void);
 		void sCollision(void);
 
 		void spawnPlayer(void);
 		void spawnEnemy(void);
+		void spawnFrequency(const Vec2 pos);
 		void spawnSmallEnemies(std::shared_ptr<Entity> &entity);
 		void spawnBullet(std::shared_ptr<Entity> &entity, const Vec2 &mousePos);
 		void spawnSpecialWeapon(std::shared_ptr<Entity> &entity);
+
+		bool entitiesCollide(const EntityPtr &a, const EntityPtr &b);
+		bool entityAndVertexCollide(const EntityPtr &a, const Vec2 &v);
 
 		void chooseAudioSource(void);
 		void gameLoop(void);
@@ -80,7 +86,6 @@ class Game {
 		sf::Vector2u windowSize{1920, 1080};
 
 		void bounceObjectFromWalls(EntityPtr e);
-		void reflectObjectVelocity(EntityPtr e, Vec2 &surfaceNormal);
 		void reflectObjectVelocity(EntityPtr e, Vec2 surfaceNormal);
 		void parseConfig(const std::string &config);
 
