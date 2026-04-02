@@ -33,7 +33,7 @@ const std::vector<std::complex<float>> int16_normalize_float(
 	std::vector<std::complex<float>> arr(SAMPLES);
 	for (std::size_t i = 0; i < SAMPLES && i < N; i++) {
 		arr[i] = static_cast<std::complex<float>>(normalize(samples[i]) *
-												  flat_top_window(i, N));
+												  flat_top_window(i, SAMPLES));
 	}
 	return arr;
 }
